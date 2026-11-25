@@ -42,6 +42,8 @@ public class AkademikViewModel extends ViewModel {
 
     // Single-event operation result untuk Toast/Snackbar
     private final SingleLiveEvent<OperationResult> operationResult = new SingleLiveEvent<>();
+    private final SingleLiveEvent<OperationResult> mahasiswaOperationResult = new SingleLiveEvent<>();
+    private final SingleLiveEvent<OperationResult> dosenOperationResult = new SingleLiveEvent<>();
 
     // Draft state untuk rotasi layar
     private final MahasiswaDraft mahasiswaDraft = new MahasiswaDraft();
@@ -104,6 +106,24 @@ public class AkademikViewModel extends ViewModel {
 
     public SingleLiveEvent<OperationResult> getOperationResult() {
         return operationResult;
+    }
+
+    public SingleLiveEvent<OperationResult> getMahasiswaOperationResult() {
+        return mahasiswaOperationResult;
+    }
+
+    public SingleLiveEvent<OperationResult> getDosenOperationResult() {
+        return dosenOperationResult;
+    }
+
+    private void emitMahasiswaResult(OperationResult result) {
+        mahasiswaOperationResult.setValue(result);
+        operationResult.setValue(result);
+    }
+
+    private void emitDosenResult(OperationResult result) {
+        dosenOperationResult.setValue(result);
+        operationResult.setValue(result);
     }
 
     public MahasiswaDraft getMahasiswaDraft() {
@@ -188,7 +208,7 @@ public class AkademikViewModel extends ViewModel {
         // Jika terdapat error validasi Model, jangan simpan ke database!
         if (errorState.hasErrors()) {
             mahasiswaFormErrors.setValue(errorState);
-            operationResult.setValue(OperationResult.error(
+            emitMahasiswaResult(OperationResult.error(
                     "Gagal menyimpan: Periksa data yang ditandai merah.",
                     "Mahasiswa",
                     isEdit ? "UPDATE" : "INSERT"
@@ -205,7 +225,7 @@ public class AkademikViewModel extends ViewModel {
                 @Override
                 public void onSuccess(Integer result) {
                     mahasiswaDraft.clear();
-                    operationResult.setValue(OperationResult.success(
+                    emitMahasiswaResult(OperationResult.success(
                             "Data mahasiswa berhasil diperbarui.",
                             "Mahasiswa",
                             "UPDATE"
@@ -219,7 +239,7 @@ public class AkademikViewModel extends ViewModel {
                         dbError.setIdentifierError(exception.getMessage());
                     }
                     mahasiswaFormErrors.setValue(dbError);
-                    operationResult.setValue(OperationResult.error(
+                    emitMahasiswaResult(OperationResult.error(
                             exception.getMessage(),
                             "Mahasiswa",
                             "UPDATE"
@@ -231,7 +251,7 @@ public class AkademikViewModel extends ViewModel {
                 @Override
                 public void onSuccess(Long result) {
                     mahasiswaDraft.clear();
-                    operationResult.setValue(OperationResult.success(
+                    emitMahasiswaResult(OperationResult.success(
                             "Mahasiswa baru berhasil disimpan.",
                             "Mahasiswa",
                             "INSERT"
@@ -245,7 +265,7 @@ public class AkademikViewModel extends ViewModel {
                         dbError.setIdentifierError(exception.getMessage());
                     }
                     mahasiswaFormErrors.setValue(dbError);
-                    operationResult.setValue(OperationResult.error(
+                    emitMahasiswaResult(OperationResult.error(
                             exception.getMessage(),
                             "Mahasiswa",
                             "INSERT"
@@ -260,7 +280,7 @@ public class AkademikViewModel extends ViewModel {
         repository.deleteMahasiswa(mahasiswa, new RepositoryCallback<Integer>() {
             @Override
             public void onSuccess(Integer result) {
-                operationResult.setValue(OperationResult.success(
+                emitMahasiswaResult(OperationResult.success(
                         "Data mahasiswa '" + mahasiswa.getNama() + "' berhasil dihapus.",
                         "Mahasiswa",
                         "DELETE"
@@ -269,7 +289,7 @@ public class AkademikViewModel extends ViewModel {
 
             @Override
             public void onError(Exception exception) {
-                operationResult.setValue(OperationResult.error(
+                emitMahasiswaResult(OperationResult.error(
                         "Gagal menghapus mahasiswa: " + exception.getMessage(),
                         "Mahasiswa",
                         "DELETE"
@@ -319,7 +339,7 @@ public class AkademikViewModel extends ViewModel {
 
         if (errorState.hasErrors()) {
             dosenFormErrors.setValue(errorState);
-            operationResult.setValue(OperationResult.error(
+            emitDosenResult(OperationResult.error(
                     "Gagal menyimpan: Periksa data yang ditandai merah.",
                     "Dosen",
                     isEdit ? "UPDATE" : "INSERT"
@@ -335,7 +355,7 @@ public class AkademikViewModel extends ViewModel {
                 @Override
                 public void onSuccess(Integer result) {
                     dosenDraft.clear();
-                    operationResult.setValue(OperationResult.success(
+                    emitDosenResult(OperationResult.success(
                             "Data dosen berhasil diperbarui.",
                             "Dosen",
                             "UPDATE"
@@ -349,7 +369,7 @@ public class AkademikViewModel extends ViewModel {
                         dbError.setIdentifierError(exception.getMessage());
                     }
                     dosenFormErrors.setValue(dbError);
-                    operationResult.setValue(OperationResult.error(
+                    emitDosenResult(OperationResult.error(
                             exception.getMessage(),
                             "Dosen",
                             "UPDATE"
@@ -361,7 +381,7 @@ public class AkademikViewModel extends ViewModel {
                 @Override
                 public void onSuccess(Long result) {
                     dosenDraft.clear();
-                    operationResult.setValue(OperationResult.success(
+                    emitDosenResult(OperationResult.success(
                             "Dosen baru berhasil disimpan.",
                             "Dosen",
                             "INSERT"
@@ -375,7 +395,7 @@ public class AkademikViewModel extends ViewModel {
                         dbError.setIdentifierError(exception.getMessage());
                     }
                     dosenFormErrors.setValue(dbError);
-                    operationResult.setValue(OperationResult.error(
+                    emitDosenResult(OperationResult.error(
                             exception.getMessage(),
                             "Dosen",
                             "INSERT"
@@ -390,7 +410,7 @@ public class AkademikViewModel extends ViewModel {
         repository.deleteDosen(dosen, new RepositoryCallback<Integer>() {
             @Override
             public void onSuccess(Integer result) {
-                operationResult.setValue(OperationResult.success(
+                emitDosenResult(OperationResult.success(
                         "Data dosen '" + dosen.getNama() + "' berhasil dihapus.",
                         "Dosen",
                         "DELETE"
@@ -399,7 +419,7 @@ public class AkademikViewModel extends ViewModel {
 
             @Override
             public void onError(Exception exception) {
-                operationResult.setValue(OperationResult.error(
+                emitDosenResult(OperationResult.error(
                         "Gagal menghapus dosen: " + exception.getMessage(),
                         "Dosen",
                         "DELETE"

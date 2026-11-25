@@ -41,6 +41,7 @@ public class MahasiswaFragment extends Fragment implements AkademikMultiTypeAdap
 
     private boolean isEditing = false;
     private long editingId = 0;
+    private boolean suppressDraftSync = false;
 
     @Nullable
     @Override
@@ -103,6 +104,7 @@ public class MahasiswaFragment extends Fragment implements AkademikMultiTypeAdap
     }
 
     private void syncDraftToViewModel() {
+        if (suppressDraftSync) return;
         MahasiswaDraft draft = viewModel.getMahasiswaDraft();
         draft.setId(editingId);
         draft.setNama(getText(binding.etNama));
@@ -115,21 +117,30 @@ public class MahasiswaFragment extends Fragment implements AkademikMultiTypeAdap
 
     private void restoreDraftState() {
         MahasiswaDraft draft = viewModel.getMahasiswaDraft();
-        if (draft.isEditing()) {
-            isEditing = true;
-            editingId = draft.getId();
-            binding.etNama.setText(draft.getNama());
-            binding.etEmail.setText(draft.getEmail());
-            binding.etNim.setText(draft.getNim());
-            binding.etJurusan.setText(draft.getJurusan());
-            binding.etIpk.setText(draft.getIpk());
-            setEditModeUi(true, draft.getNama());
-        } else if (!draft.getNama().isEmpty() || !draft.getNim().isEmpty()) {
-            binding.etNama.setText(draft.getNama());
-            binding.etEmail.setText(draft.getEmail());
-            binding.etNim.setText(draft.getNim());
-            binding.etJurusan.setText(draft.getJurusan());
-            binding.etIpk.setText(draft.getIpk());
+        suppressDraftSync = true;
+        try {
+            if (draft.isEditing()) {
+                isEditing = true;
+                editingId = draft.getId();
+                binding.etNama.setText(draft.getNama());
+                binding.etEmail.setText(draft.getEmail());
+                binding.etNim.setText(draft.getNim());
+                binding.etJurusan.setText(draft.getJurusan());
+                binding.etIpk.setText(draft.getIpk());
+                setEditModeUi(true, draft.getNama());
+            } else if (!draft.getNama().isEmpty()
+                    || !draft.getEmail().isEmpty()
+                    || !draft.getNim().isEmpty()
+                    || !draft.getJurusan().isEmpty()
+                    || !draft.getIpk().isEmpty()) {
+                binding.etNama.setText(draft.getNama());
+                binding.etEmail.setText(draft.getEmail());
+                binding.etNim.setText(draft.getNim());
+                binding.etJurusan.setText(draft.getJurusan());
+                binding.etIpk.setText(draft.getIpk());
+            }
+        } finally {
+            suppressDraftSync = false;
         }
     }
 
@@ -156,8 +167,8 @@ public class MahasiswaFragment extends Fragment implements AkademikMultiTypeAdap
         viewModel.getMahasiswaFormErrors().observe(getViewLifecycleOwner(), this::renderFormErrors);
 
         // Observasi hasil operasi (Toast/Snackbar)
-        viewModel.getOperationResult().observe(getViewLifecycleOwner(), result -> {
-            if (result == null || !"Mahasiswa".equals(result.getEntityName())) {
+        viewModel.getMahasiswaOperationResult().observe(getViewLifecycleOwner(), result -> {
+            if (result == null) {
                 return;
             }
 
@@ -195,19 +206,24 @@ public class MahasiswaFragment extends Fragment implements AkademikMultiTypeAdap
     }
 
     private void resetForm() {
-        isEditing = false;
-        editingId = 0;
+        suppressDraftSync = true;
+        try {
+            isEditing = false;
+            editingId = 0;
 
-        binding.etNama.setText("");
-        binding.etEmail.setText("");
-        binding.etNim.setText("");
-        binding.etJurusan.setText("");
-        binding.etIpk.setText("");
+            binding.etNama.setText("");
+            binding.etEmail.setText("");
+            binding.etNim.setText("");
+            binding.etJurusan.setText("");
+            binding.etIpk.setText("");
 
-        clearErrors();
-        viewModel.resetMahasiswaFormErrors();
-        viewModel.getMahasiswaDraft().clear();
-        setEditModeUi(false, "");
+            clearErrors();
+            viewModel.resetMahasiswaFormErrors();
+            viewModel.getMahasiswaDraft().clear();
+            setEditModeUi(false, "");
+        } finally {
+            suppressDraftSync = false;
+        }
     }
 
     private void setEditModeUi(boolean editing, String nama) {
@@ -229,17 +245,22 @@ public class MahasiswaFragment extends Fragment implements AkademikMultiTypeAdap
         if (!(item instanceof Mahasiswa)) return;
         Mahasiswa m = (Mahasiswa) item;
 
-        isEditing = true;
-        editingId = m.getId();
+        suppressDraftSync = true;
+        try {
+            isEditing = true;
+            editingId = m.getId();
 
-        binding.etNama.setText(m.getNama());
-        binding.etEmail.setText(m.getEmail());
-        binding.etNim.setText(m.getNim());
-        binding.etJurusan.setText(m.getJurusan());
-        binding.etIpk.setText(String.format(Locale.US, "%.2f", m.getIpk()));
+            binding.etNama.setText(m.getNama());
+            binding.etEmail.setText(m.getEmail());
+            binding.etNim.setText(m.getNim());
+            binding.etJurusan.setText(m.getJurusan());
+            binding.etIpk.setText(String.format(Locale.US, "%.2f", m.getIpk()));
 
-        clearErrors();
-        setEditModeUi(true, m.getNama());
+            clearErrors();
+            setEditModeUi(true, m.getNama());
+        } finally {
+            suppressDraftSync = false;
+        }
         syncDraftToViewModel();
 
         // Gulir halus ke formulir di atas

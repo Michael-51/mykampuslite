@@ -107,6 +107,36 @@ public class ViewModelTest {
         assertEquals("2110114001", fakeRepository.insertedMahasiswaList.get(0).getNim());
     }
 
+    @Test
+    public void testViewModel_saveDosen_validData_emitsDosenResultWithoutTouchingMahasiswaResult() {
+        List<OperationResult> mahasiswaResults = new ArrayList<>();
+        List<OperationResult> dosenResults = new ArrayList<>();
+        viewModel.getMahasiswaOperationResult().observeForever(mahasiswaResults::add);
+        viewModel.getDosenOperationResult().observeForever(dosenResults::add);
+
+        viewModel.saveDosen(0, "Dr. Hendra", "hendra@k.id", "0415088001", "PBO, Basis Data", false);
+
+        assertEquals(1, fakeRepository.insertedDosenList.size());
+        assertEquals(0, mahasiswaResults.size());
+        assertEquals(1, dosenResults.size());
+        assertTrue(dosenResults.get(0).isSuccess());
+        assertEquals("INSERT", dosenResults.get(0).getAction());
+    }
+
+    @Test
+    public void testViewModel_updateDosen_emitsDosenUpdateSuccess() {
+        List<OperationResult> dosenResults = new ArrayList<>();
+        viewModel.getDosenOperationResult().observeForever(dosenResults::add);
+
+        viewModel.saveDosen(5L, "Dr. Hendra", "hendra@k.id", "0415088001", "PBO, Algoritma", true);
+
+        assertEquals(1, fakeRepository.updatedDosenList.size());
+        assertEquals(5L, fakeRepository.updatedDosenList.get(0).getId());
+        assertEquals(1, dosenResults.size());
+        assertTrue(dosenResults.get(0).isSuccess());
+        assertEquals("UPDATE", dosenResults.get(0).getAction());
+    }
+
     // ==========================================
     // Fake Repository untuk isolasi pengujian ViewModel
     // ==========================================

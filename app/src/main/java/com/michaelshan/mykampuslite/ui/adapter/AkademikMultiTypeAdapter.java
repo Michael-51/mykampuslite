@@ -67,10 +67,26 @@ public class AkademikMultiTypeAdapter extends ListAdapter<Person, RecyclerView.V
 
         @Override
         public boolean areContentsTheSame(@NonNull Person oldItem, @NonNull Person newItem) {
-            // Memanfaatkan equals() pada Model yang diimplementasikan untuk perbandingan akurat
-            return oldItem.equals(newItem)
-                    && Objects.equals(oldItem.getNama(), newItem.getNama())
-                    && Objects.equals(oldItem.getEmail(), newItem.getEmail());
+            if (!Objects.equals(oldItem.getNama(), newItem.getNama())) {
+                return false;
+            }
+            if (!Objects.equals(oldItem.getEmail(), newItem.getEmail())) {
+                return false;
+            }
+            if (oldItem instanceof Mahasiswa && newItem instanceof Mahasiswa) {
+                Mahasiswa oldM = (Mahasiswa) oldItem;
+                Mahasiswa newM = (Mahasiswa) newItem;
+                return Objects.equals(oldM.getNim(), newM.getNim())
+                        && Objects.equals(oldM.getJurusan(), newM.getJurusan())
+                        && Double.compare(oldM.getIpk(), newM.getIpk()) == 0;
+            }
+            if (oldItem instanceof Dosen && newItem instanceof Dosen) {
+                Dosen oldD = (Dosen) oldItem;
+                Dosen newD = (Dosen) newItem;
+                return Objects.equals(oldD.getNidn(), newD.getNidn())
+                        && Objects.equals(oldD.getMataKuliahDiampu(), newD.getMataKuliahDiampu());
+            }
+            return false;
         }
     };
 

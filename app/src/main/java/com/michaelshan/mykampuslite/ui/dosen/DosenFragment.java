@@ -40,6 +40,7 @@ public class DosenFragment extends Fragment implements AkademikMultiTypeAdapter.
 
     private boolean isEditing = false;
     private long editingId = 0;
+    private boolean suppressDraftSync = false;
 
     @Nullable
     @Override
@@ -99,6 +100,7 @@ public class DosenFragment extends Fragment implements AkademikMultiTypeAdapter.
     }
 
     private void syncDraftToViewModel() {
+        if (suppressDraftSync) return;
         DosenDraft draft = viewModel.getDosenDraft();
         draft.setId(editingId);
         draft.setNama(getText(binding.etNama));
@@ -110,19 +112,27 @@ public class DosenFragment extends Fragment implements AkademikMultiTypeAdapter.
 
     private void restoreDraftState() {
         DosenDraft draft = viewModel.getDosenDraft();
-        if (draft.isEditing()) {
-            isEditing = true;
-            editingId = draft.getId();
-            binding.etNama.setText(draft.getNama());
-            binding.etEmail.setText(draft.getEmail());
-            binding.etNidn.setText(draft.getNidn());
-            binding.etMataKuliah.setText(draft.getMataKuliahDiampu());
-            setEditModeUi(true, draft.getNama());
-        } else if (!draft.getNama().isEmpty() || !draft.getNidn().isEmpty()) {
-            binding.etNama.setText(draft.getNama());
-            binding.etEmail.setText(draft.getEmail());
-            binding.etNidn.setText(draft.getNidn());
-            binding.etMataKuliah.setText(draft.getMataKuliahDiampu());
+        suppressDraftSync = true;
+        try {
+            if (draft.isEditing()) {
+                isEditing = true;
+                editingId = draft.getId();
+                binding.etNama.setText(draft.getNama());
+                binding.etEmail.setText(draft.getEmail());
+                binding.etNidn.setText(draft.getNidn());
+                binding.etMataKuliah.setText(draft.getMataKuliahDiampu());
+                setEditModeUi(true, draft.getNama());
+            } else if (!draft.getNama().isEmpty()
+                    || !draft.getEmail().isEmpty()
+                    || !draft.getNidn().isEmpty()
+                    || !draft.getMataKuliahDiampu().isEmpty()) {
+                binding.etNama.setText(draft.getNama());
+                binding.etEmail.setText(draft.getEmail());
+                binding.etNidn.setText(draft.getNidn());
+                binding.etMataKuliah.setText(draft.getMataKuliahDiampu());
+            }
+        } finally {
+            suppressDraftSync = false;
         }
     }
 
@@ -146,8 +156,8 @@ public class DosenFragment extends Fragment implements AkademikMultiTypeAdapter.
 
         viewModel.getDosenFormErrors().observe(getViewLifecycleOwner(), this::renderFormErrors);
 
-        viewModel.getOperationResult().observe(getViewLifecycleOwner(), result -> {
-            if (result == null || !"Dosen".equals(result.getEntityName())) {
+        viewModel.getDosenOperationResult().observe(getViewLifecycleOwner(), result -> {
+            if (result == null) {
                 return;
             }
 
@@ -183,18 +193,23 @@ public class DosenFragment extends Fragment implements AkademikMultiTypeAdapter.
     }
 
     private void resetForm() {
-        isEditing = false;
-        editingId = 0;
+        suppressDraftSync = true;
+        try {
+            isEditing = false;
+            editingId = 0;
 
-        binding.etNama.setText("");
-        binding.etEmail.setText("");
-        binding.etNidn.setText("");
-        binding.etMataKuliah.setText("");
+            binding.etNama.setText("");
+            binding.etEmail.setText("");
+            binding.etNidn.setText("");
+            binding.etMataKuliah.setText("");
 
-        clearErrors();
-        viewModel.resetDosenFormErrors();
-        viewModel.getDosenDraft().clear();
-        setEditModeUi(false, "");
+            clearErrors();
+            viewModel.resetDosenFormErrors();
+            viewModel.getDosenDraft().clear();
+            setEditModeUi(false, "");
+        } finally {
+            suppressDraftSync = false;
+        }
     }
 
     private void setEditModeUi(boolean editing, String nama) {
@@ -216,16 +231,21 @@ public class DosenFragment extends Fragment implements AkademikMultiTypeAdapter.
         if (!(item instanceof Dosen)) return;
         Dosen d = (Dosen) item;
 
-        isEditing = true;
-        editingId = d.getId();
+        suppressDraftSync = true;
+        try {
+            isEditing = true;
+            editingId = d.getId();
 
-        binding.etNama.setText(d.getNama());
-        binding.etEmail.setText(d.getEmail());
-        binding.etNidn.setText(d.getNidn());
-        binding.etMataKuliah.setText(d.getMataKuliahDiampu());
+            binding.etNama.setText(d.getNama());
+            binding.etEmail.setText(d.getEmail());
+            binding.etNidn.setText(d.getNidn());
+            binding.etMataKuliah.setText(d.getMataKuliahDiampu());
 
-        clearErrors();
-        setEditModeUi(true, d.getNama());
+            clearErrors();
+            setEditModeUi(true, d.getNama());
+        } finally {
+            suppressDraftSync = false;
+        }
         syncDraftToViewModel();
 
         binding.getRoot().smoothScrollTo(0, 0);
